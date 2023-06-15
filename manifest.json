@@ -1,24 +1,12 @@
 {
-    "manifest_version": 2,
-    "name": "Tangie Text Summarizer",
-    "description": "This extension allows you to summarize selected text using OpenAI",
+    "manifest_version": 3,
+    "name": "Tangie",
     "version": "1.0",
-    "permissions": ["activeTab", "contextMenus"],
+    "permissions": ["contextMenus", "activeTab"],
+    "action": {
+      "default_popup": "popup.html"
+    },
     "background": {
-      "scripts": ["background.js"],
-      "persistent": false
-    },
-    "browser_action": {
-      "default_popup": "public/index.html",
-      "default_icon": {
-        "16": "icon16.png",
-        "48": "icon48.png",
-        "128": "icon128.png"
-      }
-    },
-    "icons": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
+      "service_worker": "background.js"
     }
-  }  
+}
