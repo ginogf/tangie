@@ -1,46 +1,70 @@
-require('dotenv').config();
-const fetch = require('node-fetch');
+const CONTEXT_MENU_ID = "tangie";
+
+chrome.contextMenus.remove(CONTEXT_MENU_ID, () => {
+  // Ignore any error that might have occurred
+  chrome.runtime.lastError;
+
+  chrome.contextMenus.create({
+    id: CONTEXT_MENU_ID,
+    title: "Tangie",
+    contexts: ["selection"]
+  });
+});
+
+let selectedText = '';
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'tangie') {
+      selectedText = info.selectionText;
+  }
+});
 
 // Listen for the message from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.message === 'getSelectedText') {
+    sendResponse({ text: selectedText });
+    return;
+  }
+
   const { action, text } = request;
 
   // Prepare the message based on the action
-  let message;
+  let prompt;
   switch (action) {
     case 'summarize':
-      message = `Can you summarize the following text? ${text}`;
+      prompt = `Can you summarize the following text? ${text}`;
       break;
     case 'explain':
-      message = `Can you explain the following text in simple terms? ${text}`;
+      prompt = `Can you explain the following text in simple terms? ${text}`;
       break;
     case 'paraphrase':
-      message = `Can you paraphrase the following text? ${text}`;
+      prompt = `Can you paraphrase the following text? ${text}`;
       break;
   }
 
   // Make a request to the OpenAI API
-  fetch('https://api.openai.com/v1/engines/davinci-codex/completions', {
+  fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
     },
     body: JSON.stringify({
-      model: "text-davinci-002",
+      model: "gpt-4",
       messages: [{
         role: "system",
         content: "You are ChatGPT, a helpful assistant."
       }, {
         role: "user",
-        content: message
-      }]
-    }),
+        content: prompt
+      }],
+      temperature: 0,
+    })
   })
   .then(response => response.json())
   .then(data => {
     // Send the response back to the popup
-    sendResponse({ text: data.choices[0].text });
+    sendResponse({ text: data.choices[0].message.content });
   })
   .catch(error => {
     console.error('Error:', error);
